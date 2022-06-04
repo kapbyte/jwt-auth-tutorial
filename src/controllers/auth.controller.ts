@@ -37,7 +37,6 @@ const userSignupController = async (req: Request, res: Response) => {
 
   // Generate Token
   const token = jwt.sign({ email, password }, `${process.env.TOKEN_KEY}`, { expiresIn: '5m' });
-  console.log('signup token => ', token);
 
   const mailOptions = {
     from: `${process.env.EMAIL_FROM}`, 
@@ -182,7 +181,6 @@ const forgotPasswordController = async (req: Request, res: Response) => {
   
   // Generate Password Reset Token
   const token = jwt.sign({ _id: existingUser._id }, `${process.env.TOKEN_KEY}`, { expiresIn: '5m' });
-  console.log('reset token -> ', token);
 
   const mailOptions = {
     from: `${process.env.EMAIL_FROM}`, 
@@ -226,7 +224,6 @@ const resetPasswordController  = async (req: Request, res: Response) => {
 
   try {
     const payload = jwt.verify(token, `${process.env.TOKEN_KEY}`) as jwt.JwtPayload;
-    console.log('payload > ', payload._id);
 
     // Validate password match
     if (password1 !== password2) {
