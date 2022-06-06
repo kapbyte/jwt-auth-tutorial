@@ -13,7 +13,7 @@ import {
 
 /**
  * API endpoint to signup a user.
- * @returns response with a success of false if user email already exists, or true if verification link is sent.
+ * @returns response with success of false if user email already exists, or true if verification link is sent.
 */
 const userSignupController = async (req: Request, res: Response) => {
   const { error } = userCredentialRequestValidator.validate(req.body);
@@ -49,15 +49,13 @@ const userSignupController = async (req: Request, res: Response) => {
   };
 
   // Send mail with defined transport object
-  mailTransporter.sendMail(mailOptions, (error: any, info: { messageId: any; response: any; }) => {
+  mailTransporter.sendMail(mailOptions, (error: any) => {
     if (error) {
-      console.log(error);
       return res.status(500).json({ 
         success: false,
         message: `Something went wrong. Pls try again!` 
       });
     }
-    console.log('Message %s sent: %s', info.messageId, info.response);
     res.status(200).json({ 
       success: true, 
       message: `Verification link sent to ${email}` 
@@ -136,8 +134,8 @@ const loginController = async (req: Request, res: Response) => {
   }
 
   // Confirm found user password.
-  const passwordMatch = await bcrypt.compare(password, user.password);
-  if (!passwordMatch) {
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+  if (!isPasswordValid) {
     return res.status(401).json({
       success: false,
       message: "Invalid password."
@@ -145,7 +143,7 @@ const loginController = async (req: Request, res: Response) => {
   }
   
   // Generate a token and send to client.
-  const token = jwt.sign({ _id: user._id }, `${process.env.TOKEN_KEY}`, { expiresIn: '3m' });
+  const token = jwt.sign({ _id: user._id }, `${process.env.TOKEN_KEY}`, { expiresIn: '30m' });
   res.status(200).json({ 
     success: true, 
     message: 'Login Successful',
@@ -192,11 +190,10 @@ const forgotPasswordController = async (req: Request, res: Response) => {
   };
 
   // Send mail with defined transport object
-  mailTransporter.sendMail(mailOptions, (error: any, info: { messageId: any; response: any; }) => {
+  mailTransporter.sendMail(mailOptions, (error: any) => {
     if (error) {
       return res.status(500).json({ success: false, message: `Something went wrong. Pls try again!` });
     }
-    console.log('Message %s sent: %s', info.messageId, info.response);
     res.status(200).json({ 
       success: true, 
       message: `Email has been sent to ${email}. Follow the instruction to set a new password.`  
@@ -251,7 +248,7 @@ const resetPasswordController  = async (req: Request, res: Response) => {
       message: `Password update successful!` 
     });
   } catch (error) {
-    return res.status(400).json({ message: `${error}` });
+    return res.status(400).json({ success: false, message: `${error}` });
   }
 }
 

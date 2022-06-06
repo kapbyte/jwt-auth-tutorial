@@ -1,14 +1,14 @@
 import { Request, Response } from 'express';
 
 /**
- * API endpoint to get protect data from the application.
- * @returns response with a success of false if user email already exists, or true if verification link is sent.
+ * API endpoint to get protected data from the application.
+ * @returns response with a success of true if user has been authorized
 */
-const bookHistoryController = async (req: Request, res: Response) => {
+const userInfoController = async (req: Request, res: Response) => {
   res.status(200).json({ 
     success: true, 
-    message: `Book history valid`  
+    message: `Hello 👋, you've been authorized to access this endpoint.`  
   });
 };
 
-export { bookHistoryController };
+export { userInfoController };

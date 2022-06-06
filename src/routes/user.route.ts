@@ -3,9 +3,9 @@ const router = express.Router();
 import { verifyAuthToken } from '../middlewares/verify.token';
 
 import { 
-  bookHistoryController
+  userInfoController
 } from '../controllers/user.controller';
 
-router.get('/api/book-history', verifyAuthToken, bookHistoryController);
+router.get('/info', verifyAuthToken, userInfoController);
 
 module.exports = router;
