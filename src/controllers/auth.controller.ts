@@ -18,17 +18,17 @@ import {
 const userSignupController = async (req: Request, res: Response) => {
   const { error } = userCredentialRequestValidator.validate(req.body);
   if (error) {
-    return res.status(401).json({
+    return res.status(400).json({
       success: false,
       message: error.details[0].message
     });
   }
 
   const { email, password } = req.body;
-  const existingUser = await User.findOne({ email });
+  const user = await User.findOne({ email });
 
   // Check if user is already in DB
-  if (existingUser) {
+  if (user) {
     return res.status(200).json({ 
       success: false,
       message: 'Email already in use.'
@@ -72,7 +72,7 @@ const userSignupController = async (req: Request, res: Response) => {
 const emailVerificationController = async (req: Request, res: Response) => {
   const { error } = tokenRequestValidator.validate(req.body);
   if (error) {
-    return res.status(401).json({
+    return res.status(400).json({
       success: false,
       message: error.details[0].message
     });
@@ -89,7 +89,7 @@ const emailVerificationController = async (req: Request, res: Response) => {
       if (existingUser) {
         return res.status(200).json({ 
           success: false,
-          message: `${email} has been already been verified.`
+          message: `${email} has already been verified.`
         });
       }
 
@@ -104,7 +104,6 @@ const emailVerificationController = async (req: Request, res: Response) => {
       user.save();
       res.status(201).json({ success: true, id: user._id, message: 'User Registration Successful.' });
     } catch (error) {
-      console.log('error > ', error);
       return res.status(400).json({ message: `${error}` });
     }
   } else {
@@ -119,7 +118,7 @@ const emailVerificationController = async (req: Request, res: Response) => {
 const loginController = async (req: Request, res: Response) => {
   const { error } = userCredentialRequestValidator.validate(req.body);
   if (error) {
-    return res.status(401).json({
+    return res.status(400).json({
       success: false,
       message: error.details[0].message
     });
@@ -128,8 +127,8 @@ const loginController = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   // Check for valid user email.
-  const existingUser = await User.findOne({ email });
-  if (!existingUser) {
+  const user = await User.findOne({ email });
+  if (!user) {
     return res.status(401).json({
       success: false,
       message: "Email does not exists."
@@ -137,7 +136,7 @@ const loginController = async (req: Request, res: Response) => {
   }
 
   // Confirm found user password.
-  const passwordMatch = await bcrypt.compare(password, existingUser.password);
+  const passwordMatch = await bcrypt.compare(password, user.password);
   if (!passwordMatch) {
     return res.status(401).json({
       success: false,
@@ -146,12 +145,12 @@ const loginController = async (req: Request, res: Response) => {
   }
   
   // Generate a token and send to client.
-  const token = jwt.sign({ _id: existingUser._id }, `${process.env.TOKEN_KEY}`, { expiresIn: '3m' });
+  const token = jwt.sign({ _id: user._id }, `${process.env.TOKEN_KEY}`, { expiresIn: '3m' });
   res.status(200).json({ 
     success: true, 
     message: 'Login Successful',
     token, 
-    user: existingUser._id 
+    user: user._id 
   });
 };
 
@@ -162,7 +161,7 @@ const loginController = async (req: Request, res: Response) => {
 const forgotPasswordController = async (req: Request, res: Response) => {
   const { error } = forgotPasswordRequestValidator.validate(req.body);
   if (error) {
-    return res.status(401).json({
+    return res.status(400).json({
       success: false,
       message: error.details[0].message
     });
@@ -171,8 +170,8 @@ const forgotPasswordController = async (req: Request, res: Response) => {
   const { email } = req.body;
 
   // Check if user exists
-  const existingUser = await User.findOne({ email });
-  if (!existingUser) {
+  const user = await User.findOne({ email });
+  if (!user) {
     return res.status(401).json({
       success: false,
       message: "Email does not exists."
@@ -180,7 +179,7 @@ const forgotPasswordController = async (req: Request, res: Response) => {
   }
   
   // Generate Password Reset Token
-  const token = jwt.sign({ _id: existingUser._id }, `${process.env.TOKEN_KEY}`, { expiresIn: '5m' });
+  const token = jwt.sign({ _id: user._id }, `${process.env.TOKEN_KEY}`, { expiresIn: '5m' });
 
   const mailOptions = {
     from: `${process.env.EMAIL_FROM}`, 
@@ -195,7 +194,6 @@ const forgotPasswordController = async (req: Request, res: Response) => {
   // Send mail with defined transport object
   mailTransporter.sendMail(mailOptions, (error: any, info: { messageId: any; response: any; }) => {
     if (error) {
-      console.log(error);
       return res.status(500).json({ success: false, message: `Something went wrong. Pls try again!` });
     }
     console.log('Message %s sent: %s', info.messageId, info.response);
@@ -216,7 +214,7 @@ const resetPasswordController  = async (req: Request, res: Response) => {
 
   const { error } = passwordResetRequestValidator.validate(req.body);
   if (error) {
-    return res.status(401).json({
+    return res.status(400).json({
       success: false,
       message: error.details[0].message
     });
@@ -234,8 +232,8 @@ const resetPasswordController  = async (req: Request, res: Response) => {
     }
 
     // Find user with id and update with new password
-    const existingUser = await User.findById(payload._id);
-    if (!existingUser) {
+    const user = await User.findById(payload._id);
+    if (!user) {
       return res.status(401).json({
         success: false,
         message: "User ID not valid."
@@ -244,16 +242,15 @@ const resetPasswordController  = async (req: Request, res: Response) => {
 
     // Hash password before update user document in DB
     const hashedPassword = await bcrypt.hash(password1, 10);
-    existingUser.password = hashedPassword;
-    existingUser.save();
+    user.password = hashedPassword;
+    user.save();
 
     res.status(200).json({ 
       success: true,
-      id: existingUser._id,
+      id: user._id,
       message: `Password update successful!` 
     });
   } catch (error) {
-    console.log(error);
     return res.status(400).json({ message: `${error}` });
   }
 }

@@ -10,7 +10,7 @@ import {
 } from '../controllers/auth.controller';
 
 router.post('/api/signup', userSignupController);
-router.post('/api/email/verification', emailVerificationController);
+router.post('/api/verification', emailVerificationController);
 router.post('/api/login', loginController);
 router.put('/api/forgot-password', forgotPasswordController);
 router.put('/api/reset-password/:token', resetPasswordController);
